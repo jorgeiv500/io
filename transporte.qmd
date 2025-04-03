@@ -1,0 +1,365 @@
+---
+title: "🚚 Modelos de Transporte y Asignación"
+subtitle: "📦 Métodos Clásicos y Aplicaciones"
+author: "👨‍🏫 Jorge Iván Romero Gelvez"
+institute: "🏛️ Universidad Jorge Tadeo Lozano"
+date: "📅 Abril 2025"
+format:
+  revealjs:
+    theme: [default, custom.scss]
+    slide-number: true
+    highlight-style: dracula
+    code-line-numbers: true
+    code-annotations: hover
+    transition: slide
+    katex: true
+    toc: true
+    toc-title: "Contenido"
+    toc-depth: 2
+    incremental: true
+    scrollable: true
+    chalkboard: true
+execute:
+  echo: true
+  warning: false
+  message: false
+  freeze: false
+jupyter: python3
+---
+
+
+## 🚛 Problema clásico de transporte
+
+Objetivo: Minimizar el costo de transportar bienes desde múltiples **orígenes** hacia múltiples **destinos**, cumpliendo con oferta y demanda.
+Se representa como una **tabla de costos**.
+Cada celda representa el costo de enviar desde un origen $i$ a un destino $j$.
+
+**Formulación matemática:**
+Sean:
+
+- $m$: número de orígenes
+- $n$: número de destinos
+- $c_{ij}$: costo unitario de transportar de $i$ a $j$
+- $x_{ij}$: cantidad a transportar de $i$ a $j$
+- $a_i$: oferta del origen $i$
+- $b_j$: demanda del destino $j$
+
+---
+
+**Modelo:**
+
+$\min \sum_{i=1}^{m} \sum_{j=1}^{n} c_{ij} x_{ij}$
+
+Sujeto a:
+
+$\sum_{j=1}^{n} x_{ij} = a_i \quad \text{(restricción de oferta)}$
+$\sum_{i=1}^{m} x_{ij} = b_j \quad \text{(restricción de demanda)}$
+
+$x_{ij} \ge 0 \quad \text{(no negatividad)}$
+
+---
+
+## 🔲 Método de la Esquina Noroeste (NWC)
+
+- Técnica de inicialización rápida.
+- Se empieza en la celda superior izquierda de la tabla.
+- Se asigna la cantidad máxima posible según oferta y demanda.
+- Se avanza a la derecha o hacia abajo, según se agote la oferta o demanda.
+- **Ventajas:** Fácil y rápida.
+- **Desventajas:** No considera los costos.
+
+---
+
+## 💸 Método de Costo Mínimo
+
+- Se elige la celda con el **menor costo unitario** en toda la tabla.
+- Se asigna la máxima cantidad posible según oferta y demanda.
+- Se tacha fila o columna que se haya cumplido.
+- Se repite el proceso con los costos restantes.
+- **Ventaja:** Mejora respecto a NWC al considerar los costos.
+
+---
+
+## 📊 Método de Aproximación de Vogel (VAM)
+
+- Método heurístico que suele generar la mejor solución inicial.
+- Para cada fila y columna se calcula la **penalización** (diferencia entre los dos menores costos).
+- Se elige la fila/columna con mayor penalización.
+- Se asigna en la celda con menor costo de esa fila/columna.
+- **Ventajas:** Mejora sustancial sobre NWC y costo mínimo y es  Generalmente cercana al óptimo.
+
+---
+
+## 🧮 “Salto de piedra en piedra” — Método de mejora
+
+- Una vez obtenida la solución básica inicial (NWC, mínimo costo, o Vogel), se mejora con un método iterativo.
+- Se usa un camino cerrado o ciclo para **evaluar el impacto** de mover unidades entre celdas.
+
+- Pasos:
+
+1. Identificar una celda vacía (no básica) y construir un **ciclo cerrado** alternando + y −.
+2. Calcular la **variación de costo total** al mover unidades a lo largo del ciclo.
+3. Si el costo disminuye, se realiza el movimiento.
+4. Repetir hasta que no haya mejoras.
+
+- Este proceso está basado en la **regla de Stepping Stone** (salto de piedra en piedra) o el **método de MODI (Modified Distribution Method)**.
+
+---
+
+## 🔧 Método MODI (Método de Distribución Modificada)
+
+- Permite **evaluar óptimamente** la solución básica inicial y mejorarla si es necesario.
+- Calcula **valores duales** $u_i$ y $v_j$ para filas y columnas.
+- Evalúa cada celda no básica con el **costo reducido**:
+  
+  $\Delta_{ij} = c_{ij} - (u_i + v_j)$
+
+- Si **todos los $\Delta_{ij} \ge 0$**, la solución es óptima.
+- Si algún $\Delta_{ij} < 0$, existe una mejora posible y se procede con un **ciclo de mejora**.
+
+---
+
+## 🧮 Formulación matemática del MODI
+
+Sea:
+
+- $B$: conjunto de variables básicas (celdas ocupadas)
+- $c_{ij}$: costo de la celda $(i, j)$
+- $u_i$, $v_j$: multiplicadores asociados a restricciones de oferta y demanda
+
+    Para las celdas básicas $(i, j) \in B$:
+
+    $c_{ij} = u_i + v_j$
+
+    Se fija arbitrariamente $u_1 = 0$, y se calculan los demás $ u_i $ y $ v_j $ usando las celdas ocupadas.
+
+    Luego, para cada celda no básica $ (i, j) \notin B $:
+
+    $\Delta_{ij} = c_{ij} - (u_i + v_j)$
+
+---
+
+## 📉 Interpretación del valor de $\Delta_{ij}$
+
+- Si $\Delta_{ij} > 0$: aumentar $x_{ij}$ **aumentaría** el costo total.
+- Si $\Delta_{ij} = 0$: hay **empate** (posibilidad de solución alternativa).
+- Si $\Delta_{ij} < 0$: aumentar $x_{ij}$ **reduciría** el costo total → se mejora la solución.
+
+---
+
+## 🔁 Proceso iterativo con MODI
+
+1. Calcula los $u_i$ y $v_j$ usando las celdas básicas.
+2. Calcula $\Delta_{ij}$ para todas las celdas no básicas.
+3. Si todas las $\Delta_{ij} \ge 0$: ¡solución óptima!
+4. Si alguna $\Delta_{ij} < 0$:
+   - Selecciona la más negativa.
+   - Construye un ciclo cerrado desde esa celda.
+   - Aplica el “salto de piedra en piedra” (ajuste +/− en ciclo).
+   - Actualiza la tabla y repite.
+
+---
+
+## 📦 Datos del problema
+
+- 3 fábricas: F1, F2, F3
+- 5 mercados: M1, M2, M3, M4, M5
+
+|        | M1 | M2 | M3 | M4 | M5 | Oferta |
+|--------|----|----|----|----|----|--------|
+| **F1** | 61 | 72 | 45 | 55 | 66 | 15     |
+| **F2** | 69 | 78 | 60 | 49 | 56 | 20     |
+| **F3** | 59 | 66 | 63 | 61 | 47 | 15     |
+| **Demanda** | 11 | 12 | 9 | 10 | 8 |        |
+
+
+---
+
+## 🧮 Método de la Esquina Noroeste
+
+Asignación:
+
+|        | M1 | M2 | M3 | M4 | M5 | Oferta |
+|--------|----|----|----|----|----|--------|
+| **F1** | 11 | 4  |    |    |    | 15     |
+| **F2** |    | 8  | 9  | 3  |    | 20     |
+| **F3** |    |    |    | 7  | 8  | 15     |
+| **Demanda** | 0  | 0  | 0  | 0  | 0  |        |
+
+**Costo total = 3073**
+
+
+---
+
+## 💰 **Método de Costo Mínimo**
+
+
+Asignación:
+
+|        | M1 | M2 | M3 | M4 | M5 | Oferta |
+|--------|----|----|----|----|----|--------|
+| **F1** | 4  | 2  | 9  |    |    | 15     |
+| **F2** |    | 10 |    | 10 |    | 20     |
+| **F3** | 7  |    |    |    | 8  | 15     |
+| **Demanda** | 0  | 0  | 0  | 0  | 0  |        |
+
+**Costo total = 2852**
+
+
+---
+
+## 📐 **Aproximación de Vogel (VAM)**
+
+
+
+Asignación:
+
+|        | M1 | M2 | M3 | M4 | M5 | Oferta |
+|--------|----|----|----|----|----|--------|
+| **F1** | 6  |    | 9  |    |    | 15     |
+| **F2** | 5  | 5  |    | 10 |    | 20     |
+| **F3** |    | 7  |    |    | 8  | 15     |
+| **Demanda** | 0  | 0  | 0  | 0  | 0  |        |
+
+**Costo total = 2834**
+
+
+---
+
+## 🧮 Tabla inicial para aplicar MODI
+
+Las celdas **básicas** (asignadas ≠ 0) están **marcadas en negrita**:
+
+|     | M1 | M2 | M3 | M4 | M5 | Oferta |
+|-----|----|----|----|----|----|--------|
+| F1  | **6**  |     | **9**  |     |     | 15     |
+| F2  | **5**  | **5**  |     | **10** |     | 20     |
+| F3  |     | **7**  |     |     | **8**  | 15     |
+|     | 11 | 12 | 9  | 10 | 8  |        |
+
+\[
+m = 3, \quad n = 5, \quad m + n - 1 = 7 \quad \text{(número de celdas básicas)}
+\]
+
+Esta tabla será la base para:
+
+- Calcular $u_i$ y $v_j$
+- Evaluar $\Delta_{ij}$
+- Iniciar los ciclos de mejora (si existen celdas con $\Delta_{ij} < 0$)
+
+
+---
+
+## 🔧 Paso 1: Cálculo de $u_i$ y $v_j$
+
+A partir de la solución inicial, se usa la condición:
+
+$$
+c_{ij} = u_i + v_j \quad \text{(para celdas básicas)}
+$$
+
+Fijamos $u_1 = 0$ y resolvemos:
+
+| Celda   | Ecuación           | Resultado     |
+|---------|--------------------|---------------|
+| $c_{11}$ | $61 = u_1 + v_1$   | $v_1 = 61$     |
+| $c_{13}$ | $45 = u_1 + v_3$   | $v_3 = 45$     |
+| $c_{21}$ | $69 = u_2 + v_1$   | $u_2 = 8$      |
+| $c_{22}$ | $78 = u_2 + v_2$   | $v_2 = 70$     |
+| $c_{24}$ | $49 = u_2 + v_4$   | $v_4 = 41$     |
+| $c_{32}$ | $66 = u_3 + v_2$   | $u_3 = -4$     |
+| $c_{35}$ | $47 = u_3 + v_5$   | $v_5 = 51$     |
+
+---
+
+## 📉 Paso 2: Evaluación de celdas vacías
+
+Se calcula:
+
+$$
+\Delta_{ij} = c_{ij} - (u_i + v_j)
+$$
+
+Solo se evalúan **celdas no básicas** (las vacías):
+
+| Celda     | $c_{ij}$ | $u_i + v_j$ | $\Delta_{ij}$ |
+|-----------|----------|-------------|----------------|
+| $(1,2)$   | 72       | $0 + 70$     | $2$            |
+| $(1,4)$   | 55       | $0 + 41$     | $14$           |
+| $(1,5)$   | 66       | $0 + 51$     | $15$           |
+| $(2,3)$   | 60       | $8 + 45$     | $7$            |
+| $(2,5)$   | 56       | $8 + 51$     | $-3$           |
+| $(3,1)$   | 59       | $-4 + 61$    | $2$            |
+| $(3,3)$   | 63       | $-4 + 45$    | $22$           |
+| $(3,4)$   | 61       | $-4 + 41$    | $24$           |
+
+⚠️ Como $\Delta_{25} = -3$, la solución **no es óptima**.  
+Se procede a construir un **ciclo de mejora** usando la celda $(2,5)$.
+
+
+---
+
+## 🔄 Ciclo de mejora desde la celda $(2,5)$
+
+Visualización del **camino cerrado** alternando signos $+$ y $-$:
+
+|     | M1 | M2           | M3 | M4 | M5           |
+|-----|----|--------------|----|----|--------------|
+| F1  | **6**  |              | **9**  |      |              |
+| F2  | **5**  | **5 (−)**     |      | **10** | **(2,5) +**  |
+| F3  |       | **7 (+)**     |      |      | **8 (−)**  |
+
+Notas del recorrido:
+
+- Inicia en la celda vacía **$(2,5)$** con $\Delta_{25} = -3$
+- Ciclo de mejora:  
+  $(2,5) \rightarrow (2,2) \rightarrow (3,2) \rightarrow (3,5) \rightarrow (2,5)$  
+- Patrón de signos: $+ \rightarrow - \rightarrow + \rightarrow -$
+
+---
+
+## ➕ Ajuste de asignaciones con $\theta = 5$
+
+Se aplica $\theta = 5$, que es el menor valor en las celdas con signo $-$.
+
+Nueva asignación:
+
+|     | M1 | M2   | M3 | M4 | M5   | Oferta |
+|-----|----|------|----|----|------|--------|
+| F1  | 6  |      | 9  |    |      | 15     |
+| F2  | 5  | 0    |    | 10 | 5    | 20     |
+| F3  |    | 12   |    |    | 3    | 15     |
+|     | 11 | 12   | 9  | 10 | 8    |        |
+
+---
+
+# 💰 Nuevo costo total
+
+Se recalcula el costo total:
+
+$$
+\text{Costo total} =
+6 \cdot 61 + 9 \cdot 45 +
+5 \cdot 69 + 10 \cdot 49 + 5 \cdot 56 +
+12 \cdot 66 + 3 \cdot 47 = \boxed{2819}
+$$
+
+✅ La solución fue **mejorada** gracias al ciclo de mejora.  
+🔁 Puedes continuar aplicando MODI si existen $\Delta_{ij} < 0$.
+
+
+---
+
+:::{.text-center}
+
+<div class="mx-auto max-w-5xl p-4 bg-white border border-gray-300 rounded-2xl shadow-lg">
+  <iframe 
+    src="https://docs.google.com/spreadsheets/d/e/2PACX-1vS6HhVgBfFXUiY3nugyiU-K-FTN36lksR3HTyMmEeECrPf9-j5u3wX9BX21SQIyRkrvfUNFYkl2aEd-/pubhtml?widget=true&amp;headers=false"
+    width="100%"
+    height="600"
+    class="rounded-lg border-0"
+    allowfullscreen
+  ></iframe>
+</div>
+
+:::
